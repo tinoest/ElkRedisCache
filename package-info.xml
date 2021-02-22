@@ -8,13 +8,13 @@
 
 	<install for="1.1.0 - 1.1.99">
         <hook hook="integrate_save_cache_settings" function="RedisCache::integrate_save_cache_settings" file="SOURCEDIR/RedisCache.integrate.php" />
-		<require-file name="RedisCache.integrate.php" destination="SUBSDIR"/>
-		<require-file name="Redisbased.php" destination="SOURCEDIR/CacheMethod">Install the Redis Cache</require-file>
+		<require-file name="RedisCache.integrate.php" destination="SOURCEDIR"/>
+		<require-file name="Redisbased.php" destination="SUBSDIR/CacheMethod">Install the Redis Cache</require-file>
 		<redirect url="index.php?action=admin;area=serversettings;sa=cache;" timeout="5000">redirect.txt</redirect>
 	</install>
 
 	<uninstall for="1.1.0 - 1.1.99">
-        <hook reverse="true" hook="integrate_save_cache_settings" function="ElkRedisCache::integrate_save_cache_settings" file="SUBSDIR/RedisCache.integrate.php" />
+        <hook reverse="true" hook="integrate_save_cache_settings" function="RedisCache::integrate_save_cache_settings" file="SOURCEDIR/RedisCache.integrate.php" />
 		<remove-file name="SUBSDIR/CacheMethod/Redisbased.php" />
 		<remove-file name="SOURCEDIR/RedisCache.integrate.php" />
 	</uninstall>
