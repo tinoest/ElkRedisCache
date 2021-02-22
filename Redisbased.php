@@ -43,25 +43,6 @@ class Redisbased extends Cache_Method_Abstract
             return false;
         }
 
-        $host   = '127.0.0.1';
-        $port   = '6379';
-        $passwd = '';
-        $db     = 0;
-
-        $this->redisServer = new \Redis();
-
-        if(!($this->redisServer instanceof \Redis)) {
-            return false;
-        }
-
-        $this->redisServer->connect($host, $port);
-
-        if(!empty($password)) {
-            $this->redisServer->auth($passwd);
-        }
-
-        $this->redisServer->select($db);
-
 		return true;
 	}
 
@@ -79,6 +60,10 @@ class Redisbased extends Cache_Method_Abstract
 	{
         $result = false;
 
+        if(is_null($this->redisServer)) {
+            $this->connect();
+        }
+
         if($this->redisServer instanceof \Redis) {
             $this->redisServer->setEx($key, $ttl, $value);
         }
@@ -93,6 +78,10 @@ class Redisbased extends Cache_Method_Abstract
 	{
         $value = '';
 
+        if(is_null($this->redisServer)) {
+            $this->connect();
+        }
+
         if($this->redisServer instanceof \Redis) {
             $value = $this->redisServer->get($key);
         }
@@ -106,6 +95,10 @@ class Redisbased extends Cache_Method_Abstract
 	public function clean($type = '')
 	{
         $result = false;
+
+        if(is_null($this->redisServer)) {
+            $this->connect();
+        }
 
         if($this->redisServer instanceof \Redis) {
             $result = $this->redisServer->flushDb();
@@ -137,7 +130,7 @@ class Redisbased extends Cache_Method_Abstract
 	/**
 	 * Adds the settings to the settings page.
 	 *
-	 * Used by integrate_modify_cache_settings added in the title method
+	 * Used by integrate_modify_redis_settings added in the title method
 	 *
 	 * @param array $config_vars
 	 */
@@ -145,10 +138,54 @@ class Redisbased extends Cache_Method_Abstract
 	{
         $txt['redis_ip']       = 'Redis Server IP';
         $txt['redis_port']     = 'Redis Server Port';
+        $txt['redis_user']     = 'Redis Server Username';
         $txt['redis_password'] = 'Redis Server Password';
 
-		$config_vars[] = array ('cache_ip',        $txt['redis_ip'],          'file',   'text',     15,     'cache_ip' );
-		$config_vars[] = array ('cache_port',      $txt['redis_port'],        'file',   'text',     15,     'cache_port' );
-		$config_vars[] = array ('cache_password',  $txt['redis_password'],    'file',   'text',     30,     'cache_password' );
+		$config_vars[] = array ('redis_ip',         $txt['redis_ip'],       'string', 'text',   15,     'redis_ip' );
+		$config_vars[] = array ('redis_port',       $txt['redis_port'],     'string', 'text',   15,     'redis_port' );
+		$config_vars[] = array ('redis_user',       $txt['redis_user'],     'string', 'text',   15,     'redis_user' );
+        $config_vars[] = array ('redis_password',   $txt['redis_password'], 'string', 'text',   15,     'redis_password' );
 	}
+
+    private function connect()
+    {
+        global $modSettings;
+        
+		if(!class_exists('Redis')) {
+            return false;
+        }
+
+        foreach(array('redis_ip', 'redis_port', 'redis_user', 'redis_password') as $key) {
+            if(isset($modSettings[$key])) {
+                $$key   = $modSettings[$key];
+            }
+            else {
+                $$key   = '';
+            }
+        }
+
+        if(empty($redis_ip) || empty($redis_port)) {
+            return false;
+        }
+
+        $this->redisServer = new \Redis();
+
+        if(!($this->redisServer instanceof \Redis)) {
+            return false;
+        }
+
+        $this->redisServer->connect($redis_ip, $redis_port);
+
+        if(!empty($redis_user) && !empty($redis_password)) {
+            $this->redisServer->auth($redis_user, $redis_password);
+        }
+        else if(!empty($redis_password)) {
+            $this->redisServer->auth($redis_password);
+        }
+
+        $this->redisServer->select(0);
+
+        return true;
+    }
+
 }
