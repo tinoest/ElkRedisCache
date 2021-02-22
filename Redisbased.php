@@ -25,7 +25,12 @@ class Redisbased extends Cache_Method_Abstract
 	/**
 	 * {@inheritdoc}
 	 */
-	protected $title = 'Redis-based caching';
+	protected $title        = 'Redis-based caching';
+
+	/**
+	 * {@inheritdoc}
+	 */
+    protected $redisServer  = null;
 
 	/**
 	 * {@inheritdoc}
@@ -34,6 +39,28 @@ class Redisbased extends Cache_Method_Abstract
 	{
 		parent::__construct($options);
 
+		if(!class_exists('Redis')) {
+            return false;
+        }
+
+        $host   = '127.0.0.1';
+        $port   = '6379';
+        $passwd = '';
+        $db     = 0;
+
+        $this->redisServer = new \Redis();
+
+        if(!($this->redisServer instanceof \Redis)) {
+            return false;
+        }
+
+        $this->redisServer->connect($host, $port);
+
+        if(!empty($password)) {
+            $this->redisServer->auth($passwd);
+        }
+
+        $this->redisServer->select($db);
 
 		return true;
 	}
@@ -52,6 +79,10 @@ class Redisbased extends Cache_Method_Abstract
 	{
         $result = false;
 
+        if($this->redisServer instanceof \Redis) {
+            $this->redisServer->setEx($key, $ttl, $value);
+        }
+
 		return $result;
 	}
 
@@ -61,7 +92,11 @@ class Redisbased extends Cache_Method_Abstract
 	public function get($key, $ttl = 120)
 	{
         $value = '';
-       
+
+        if($this->redisServer instanceof \Redis) {
+            $value = $this->redisServer->get($key);
+        }
+     
         return $value;
 	}
 
@@ -104,6 +139,12 @@ class Redisbased extends Cache_Method_Abstract
 	 */
 	public function settings(&$config_vars)
 	{
+        $txt['redis_ip']       = 'Redis Server IP';
+        $txt['redis_port']     = 'Redis Server Port';
+        $txt['redis_password'] = 'Redis Server Password';
 
+		$config_vars[] = array ('cache_ip',        $txt['redis_ip'],          'file',   'text',     15,     'cache_ip' );
+		$config_vars[] = array ('cache_port',      $txt['redis_port'],        'file',   'text',     15,     'cache_port' );
+		$config_vars[] = array ('cache_password',  $txt['redis_password'],    'file',   'text',     30,     'cache_password' );
 	}
 }
