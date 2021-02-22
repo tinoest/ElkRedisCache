@@ -107,6 +107,10 @@ class Redisbased extends Cache_Method_Abstract
 	{
         $result = false;
 
+        if($this->redisServer instanceof \Redis) {
+            $result = $this->redisServer->flushDb();
+        }
+
 		return $result;
 	}
 
